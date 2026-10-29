@@ -8,13 +8,32 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.22.0'
-      - name: Setup project
+      - name: Build GLOOV
         run: |
-          mv lib/main.dart /tmp/main.dart
-          rm -rf analysis_options.yaml
-          flutter create . --project-name gloov_app --org com.gloomaps --platforms android --no-pub
-          mv /tmp/main.dart lib/main.dart
+          flutter create . --project-name gloov_app --org com.gloov.app --platforms android --no-pub
           flutter pub add webview_flutter
+          mkdir -p lib
+          cat > lib/main.dart << 'EOF'
+          import 'package:flutter/material.dart';
+          import 'package:webview_flutter/webview_flutter.dart';
+          void main() { runApp(const MaterialApp(home: GloovPage(), debugShowCheckedModeBanner: false)); }
+          class GloovPage extends StatefulWidget { const GloovPage({super.key}); @override State<GloovPage> createState() => _GloovPageState(); }
+          class _GloovPageState extends State<GloovPage> {
+            late final WebViewController controller;
+            @override
+            void initState() {
+              super.initState();
+              controller = WebViewController()
+                ..setJavaScriptMode(JavaScriptMode.unrestricted)
+                ..loadRequest(Uri.parse('https://gloovmaps.com/'));
+            }
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(body: SafeArea(child: WebViewWidget(controller: controller)));
+            }
+          }
+          EOF
+          flutter pub get
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
