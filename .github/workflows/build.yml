@@ -1,41 +1,26 @@
-name: Build APK
-on: [push]
+name: Build GLOOV FINAL
+on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.22.0'
-      - name: Build GLOOV
-        run: |
-          flutter create . --project-name gloov_app --org com.gloov.app --platforms android --no-pub
-          flutter pub add webview_flutter
-          mkdir -p lib
-          cat > lib/main.dart << 'EOF'
-          import 'package:flutter/material.dart';
-          import 'package:webview_flutter/webview_flutter.dart';
-          void main() { runApp(const MaterialApp(home: GloovPage(), debugShowCheckedModeBanner: false)); }
-          class GloovPage extends StatefulWidget { const GloovPage({super.key}); @override State<GloovPage> createState() => _GloovPageState(); }
-          class _GloovPageState extends State<GloovPage> {
-            late final WebViewController controller;
-            @override
-            void initState() {
-              super.initState();
-              controller = WebViewController()
-                ..setJavaScriptMode(JavaScriptMode.unrestricted)
-                ..loadRequest(Uri.parse('https://gloovmaps.com/'));
-            }
-            @override
-            Widget build(BuildContext context) {
-              return Scaffold(body: SafeArea(child: WebViewWidget(controller: controller)));
-            }
-          }
-          EOF
-          flutter pub get
+          channel: 'stable'
+      - run: flutter pub get
       - run: flutter build apk --release
+      - run: flutter build appbundle --release
       - uses: actions/upload-artifact@v4
         with:
-          name: gloov-apk
+          name: gloov-apk-FINAL
           path: build/app/outputs/flutter-apk/app-release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gloov-aab-FOR-PLAYSTORE
+          path: build/app/outputs/bundle/release/app-release.aab
