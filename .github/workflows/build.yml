@@ -13,6 +13,10 @@ jobs:
         with:
           flutter-version: '3.22.0'
           channel: 'stable'
+      - name: Fix old Android project
+        run: |
+          rm -rf android
+          flutter create . --platforms=android --org=com.gloov.app --project-name=gloov
       - run: flutter pub get
       - run: flutter build apk --release
       - run: flutter build appbundle --release
